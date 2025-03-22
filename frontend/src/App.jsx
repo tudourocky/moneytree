@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 
 const FileUpload = () => {
@@ -29,7 +27,9 @@ const FileUpload = () => {
   };
 
   return (
+    
     <div className="file-upload-box">
+      <div className="vertical-line"></div>
       <label className="file-input-label">
         <input type="file" accept="application/pdf" onChange={handleFileChange} />
         <div className="upload-box">📄 Click or Drag to Upload PDF</div>
@@ -43,5 +43,7 @@ const FileUpload = () => {
     </div>
   );
 };
+
+
 
 export default FileUpload;
