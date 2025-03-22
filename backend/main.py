@@ -9,12 +9,11 @@ app = FastAPI()
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 
-uri = settings.database_url
+uri = settings.database_url 
 
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
+client = MongoClient(uri)
 
 # Send a ping to confirm a successful connection
 try:
@@ -23,14 +22,16 @@ try:
 except Exception as e:
     print(e)
 
+
 co = cohere.ClientV2(settings.cohere_key)
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
-@app.get("/cohere")
+@app.get("/process")
 async def process_transaction():
+    
     return {"message": "Process Transaction"}
 
 @app.post("/init_chat/{personality}")
@@ -106,6 +107,4 @@ async def initialize_chatbot(personality):
         temperature=0.2
     )
 
-    # return json.loads(response.message.content[0].text)["intro"]
-    # return response.message.content[0].text)["text"]
-    return response
+    return response.message.content[0].text
