@@ -103,20 +103,9 @@ async def initialize_chatbot(personality):
             {"role": "system", "content": prompt },
             {"role": "user", "content": "Please give an one sentence introduction about yourself"}
         ],
-        temperature=0.2,
-        # response_format={
-        #     "type": "json_object",
-        #     "schema": {
-        #         "type": "object",
-        #         "properties": {
-        #             "intro":{
-        #                 "type": "string"
-        #             }
-        #         },
-        #         "required": ["intro"]
-        #     }
-        # }
+        temperature=0.2
     )
 
     # return json.loads(response.message.content[0].text)["intro"]
+    # return response.message.content[0].text)["text"]
     return response
