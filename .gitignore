@@ -1,0 +1,57 @@
+# General ignores for the entire project
+.DS_Store
+*.log
+*.swp
+*.swo
+
+# Ignore node_modules and build artifacts in the frontend folder
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.next/
+frontend/.nuxt/
+frontend/.parcel-cache/
+frontend/yarn.lock
+
+# Ignore Python-specific files and folders in the backend folder
+backend/__pycache__/
+backend/*.py[cod]
+backend/$py.class
+backend/env/
+backend/venv/
+backend/.venv/
+backend/.env
+backend/*.sqlite3
+backend/*.db
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/.tox/
+backend/nosetests.xml
+backend/coverage.xml
+backend/celerybeat-schedule
+backend/celerybeat.pid
+backend/migrations/
+
+# Ignore IDE-specific files for the entire project
+.vscode/
+.idea/
+
+# Ignore build and package artifacts for the backend
+backend/*.egg
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/*.eggs/
+
+# Ignore Docker-related files (if applicable)
+backend/*.pid
+docker-compose.override.yml
+
+# Ignore Git-managed files specific to the entire project
+*.lock
+*.bak
+*.tmp
+
