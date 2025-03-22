@@ -3,33 +3,45 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const FileUpload = () => {
+  const [file, setFile] = useState(null);
+
+  // Handle file selection
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      setFile(selectedFile);
+    } else {
+      alert("Please upload a valid PDF file.");
+      setFile(null);
+    }
+  };
+
+  // Handle file upload (example: console logging)
+  const handleUpload = () => {
+    if (file) {
+      console.log("File uploaded:", file);
+      alert(`Uploaded: ${file.name}`);
+    } else {
+      alert("No file selected!");
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="file-upload-box">
+      <label className="file-input-label">
+        <input type="file" accept="application/pdf" onChange={handleFileChange} />
+        <div className="upload-box">📄 Click or Drag to Upload PDF</div>
+      </label>
+      
+      {file && <p>Selected File: {file.name}</p>}
 
-export default App
+      <button onClick={handleUpload} className="upload-button">
+        Upload
+      </button>
+    </div>
+  );
+};
+
+export default FileUpload;
