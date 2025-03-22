@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import './App.css'
+import Chart from "./Chart";
+import Chatbox from "./Chatbox";
+
 
 const FileUpload = () => {
   const [file, setFile] = useState(null);
@@ -28,8 +31,19 @@ const FileUpload = () => {
 
   return (
     
+
+    <div className="container">
+      <div className="vertical-line"></div> {/* Vertical Line */}
+      
+    
+
+    <div className="chart-container">
+      <h3 className="chart-title">Expense Breakdown</h3> {/* Title */}
+      <Chart /> {/* The Pie Chart Component */}
+
+
+
     <div className="file-upload-box">
-      <div className="vertical-line"></div>
       <label className="file-input-label">
         <input type="file" accept="application/pdf" onChange={handleFileChange} />
         <div className="upload-box">📄 Click or Drag to Upload PDF</div>
@@ -40,6 +54,12 @@ const FileUpload = () => {
       <button onClick={handleUpload} className="upload-button">
         Upload
       </button>
+    </div></div>
+
+    <div className="app">
+      <Chatbox />
+      </div>
+
     </div>
   );
 };
