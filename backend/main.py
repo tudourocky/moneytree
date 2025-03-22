@@ -2,10 +2,13 @@ from fastapi import FastAPI, HTTPException
 
 import cohere
 import json
+import asyncio
 from pydantic import BaseModel, conlist
 from config import settings
 
 app = FastAPI()
+
+mode = "PRO"
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
@@ -22,20 +25,135 @@ try:
 except Exception as e:
     print(e)
 
-
 co = cohere.ClientV2(settings.cohere_key)
 
 @app.get("/")
 async def root():
-    return {"message": "hello world"}
+    return {"message": "welcome to moneyTreeAPI"}
 
-@app.get("/process")
-async def process_transaction():
-    
-    return {"message": "Process Transaction"}
+@app.post("/process/")
+async def process():
+    user_input = """Mar 11,Point of sale purchase-Apos U of T - Scarbo Scarboroughonca,2.70
+    Mar 11,Point of sale purchase-Apos Dentistry ON CA Scarboroughonca,47.70
+    Mar 12,Point of sale purchase-Opos Apple.Com/Bill 866-712-775ONCA,6.77
+    Mar 13,Point of sale purchase-Apos Tim Hortons #23 Scarboroughonca,3.35
+    Mar 14,Point of sale purchase-Opos Tim Hortons #2326 Scarboroughonca,4.20
+    Mar 14,Point of sale purchase-Opos Tcardplus U of T Toronto ONCA,20.00
+    Mar 15,Point of sale purchase-Apos Young Trend Hai Scarboroughonca,18.98
+    Mar 15,Point of sale purchase-Apos Osmow'S Scarboroughonca,17.50
+    Mar 17,Point of sale purchase-Apos Dollarama # 211 Scarboroughonca,10.82""" 
+    data = user_input.splitlines()
 
-@app.post("/init_chat/{personality}")
-async def initialize_chatbot(personality):
+    processed = []
+    for row in data:
+        processed.append(process_transaction(row))
+        await asyncio.sleep(0.1)
+    return processed
+
+def process_transaction(transaction):
+    personality = generate_chatbot_prompt(mode)
+    prompt = """Classify the given csv transactions into cagetories of spending within the types of rent, groceries, eating out, transportation, entertainment, or other. Here are some examples:
+        Rent examples:
+        - "rent, $1200"
+        - "housing, $1400"
+        - "Jan rent, $1000"
+        - "monthly lease payment, $950"
+
+        Groceries examples:
+        - "weekly groceries, $60"
+        - "supermarket shopping, $45"
+
+        Eating out examples:
+        - "fast food lunch, $12"
+        - "dinner with friends, $35"
+        - "coffee shop, $8"
+
+        Transportation examples:
+        - "subway pass, $30"
+        - "ride share, $20"
+        - "gas refill, $50"
+
+        Entertainment examples:
+        - "movie ticket, $15"
+        - "concert ticket, $80"
+        - "gaming subscription, $10"
+
+        Other examples:
+        - "phone bill, $40"
+        - "gym membership, $25"
+        - "bank fee, $5"
+        - "gift for friend, $20"
+        
+
+        Then Classify the given csv transactions into rational, irrational, or neutral spending. Then provide a short advice on how the user could have spent that money in a more effective way for better personal finance. Here are some examples:
+        Rational examples:
+        - "local breakfast, $8"
+        - "weekly groceries, $45"
+        - "bus fare, $25"
+        - "rent payment, $1200"
+        - "prescription medication, $20"
+
+        Irrational examples:
+        - "gourmet breakfast, $100"
+        - "impulse coffee, $50"
+        - "designer sneakers, $250"
+        - "luxury gadget, $400"
+        - "extravagant dinner, $150"
+
+        Neutral examples:
+        - "utility bill, $60"
+        - "bank fee, $20"
+        - "online subscription, $10"
+        - "ATM fee, $5"
+        - "public parking, $15"
+
+        Transaction to classify:
+        {}"""
+
+    response = co.chat(
+        model='command-a-03-2025',
+        messages=[
+            {"role": "user", "content": personality + prompt.format(transaction)}
+        ],
+        temperature=0.0,
+        response_format={
+            "type": "json_object",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "date": "date of the transaction"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "the given description of the transaction"
+                    },
+                    "price": {
+                        "type": "string",
+                        "price": "value of the transaction"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["rent", "groceries", "eating out", "transportation", "entertainment", "other"]
+                    },
+                    "class": {
+                        "type": "string",
+                        "enum": ["rational", "irrational", "neutral"]
+                    },
+                    "advice": {
+                        "type": "string",
+                        "description": "A short advice on how the user could have spent that money in a more effective way for better personal finance."
+                    }
+                },
+                "required": ["date", "description", "price", "category", "class", "advice"]
+            }
+        }
+    )
+
+    return {"date": json.loads(response.message.content[0].text)["date"],"description": json.loads(response.message.content[0].text)["description"],"price": json.loads(response.message.content[0].text)["price"], "category": json.loads(response.message.content[0].text)["category"], "type": json.loads(response.message.content[0].text)["class"], "advice": json.loads(response.message.content[0].text)["advice"]}
+
+def generate_chatbot_prompt(mode):
     # initialize personality
     prompt_pro = """
     You are an expert personal finance advisor. Your role is to provide comprehensive, in-depth, and accurate guidance on a wide range of personal finance topics, including budgeting, savings, investments, debt management, retirement planning, tax strategies, insurance, and overall financial planning.
@@ -90,21 +208,31 @@ async def initialize_chatbot(personality):
 
     prompt = ""
 
-    if(personality == "PRO"):
+    if(mode == "PRO"):
         prompt = prompt_pro
-    elif(personality == "FRIEND"):
+    elif(mode == "FRIEND"):
         prompt = prompt_friend
-    elif(personality == "MOM"):
+    elif(mode == "MOM"):
         prompt = prompt_mom
     else:
         raise HTTPException(status_code=404, detail="invalid personality")
+
+    return prompt
+
+
+@app.put("/setmode/{m}")
+async def greetings(m):
+    mode = m
+    prompt = generate_chatbot_prompt(mode)
     response = co.chat(
-        model='16c03f0f-ed9c-48da-a391-7b6487c58bcc-ft',
+        model='command-a-03-2025',
         messages=[
             {"role": "system", "content": prompt },
             {"role": "user", "content": "Please give an one sentence introduction about yourself"}
-        ],
-        temperature=0.2
+        ],        
+        temperature=0.2,
     )
 
     return response.message.content[0].text
+
+    
