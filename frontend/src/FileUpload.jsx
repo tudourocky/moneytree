@@ -25,7 +25,7 @@ export default function FileUpload({file, setFile, isButtonClicked, setIsButtonC
     };
 
     return (
-        <div className="">
+        <div className="z-50">
             <label className="">
                 <input
                     type="file"
