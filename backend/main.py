@@ -1,6 +1,6 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
 import io
 import camelot
 import pandas as pd, numpy as np
@@ -16,8 +16,6 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # or ["*"] for all origins
@@ -25,7 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 mode = "PRO"
 
@@ -45,6 +42,7 @@ db = client.transactionsdb
 collection = db.transcollection
 
 co = cohere.ClientV2(settings.cohere_key)
+
 
 @app.post("/getdatafromfile")
 async def create_upload_file(file: UploadFile):
@@ -111,15 +109,20 @@ async def create_upload_file(file: UploadFile):
     csv = pdf_to_csv(file_like_object)
 
     csv_string = csv.to_csv(index=False, header=False)
-
     # store csv_string into database
     doc = {"content": csv_string}
     collection.insert_one(doc)
 
+    #     data = csv_string.split("\r\n")
+    #     processed = []
+    #     for row in data:
+    #         processed.append(process_transaction(row))
+    #         time.sleep(0.2)
+
     data = csv_string.split("\r\n")
     processed = []
-    for row in data:
-        processed.append(process_transaction(row))
+    for i in range(3):
+        processed.append(process_transaction(data[i]))
         time.sleep(0.2)
 
     plan = {"content" : generate_monthly_plan(csv_string)}
@@ -334,5 +337,26 @@ def greetings(m):
         ],        
         temperature=0.2,
     )
+
+    return response.message.content[0].text
+
+chat_history = []
+
+@app.post("/chat/{request}")
+async def chat(request: str):
+    # Send the user's message to Cohere for a response
+    if len(chat_history) == 0:
+        mode_info =  generate_chatbot_prompt(mode)
+        chat_history.append({"role": "system", "content": mode_info})
+    chat_history.append({"role": "user", "content": request})
+
+    response = co.chat(
+        model='command-a-03-2025',  # You can choose the model
+        messages=chat_history
+        ,
+        temperature=0.5,
+    )
+    chat_history.append({"role": "assistant", "content": response.message.content[0].text })
+    # Extract the text response from Cohere and return it
 
     return response.message.content[0].text
