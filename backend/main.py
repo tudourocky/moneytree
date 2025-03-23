@@ -8,9 +8,11 @@ import pandas as pd, numpy as np
 import cohere
 import json
 import asyncio
+import time
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, conlist
 from config import settings
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -87,10 +89,16 @@ async def create_upload_file(file: UploadFile):
             # print(new_table)
             new_table_list.append(new_table)
 
+        # concat the multiple tables
         result = pd.concat(new_table_list)
         result.reset_index(drop=True)
 
+        # only need date, transactions, withdrawn columns
         result_for_csv = result.filter(['Date', 'Transactions', 'withdrawn ($)'])
+        result_for_csv.reset_index(drop=True)
+
+        # remove rows where it's transactions is n/a
+        result_for_csv = result_for_csv[~result_for_csv['withdrawn ($)'].isna()]
         result_for_csv.reset_index(drop=True)
 
         return result_for_csv
@@ -100,32 +108,36 @@ async def create_upload_file(file: UploadFile):
     csv = pdf_to_csv(file_like_object)
 
     csv_string = csv.to_csv(index=False, header=False)
+    # store csv_string into database
     doc = {"content": csv_string}
     collection.insert_one(doc)
-    # store csv_string into database
-    docs = collection.find()
-    # combined_str = ""
-    # for d in docs:
-    #     print(d)
-    #     combined_str = combined_str + d["content"]
-    # result = process(combined_str)
+
+    #     data = csv_string.split("\r\n")
+    #     processed = []
+    #     for row in data:
+    #         processed.append(process_transaction(row))
+    #         time.sleep(0.2)
+
+    data = csv_string.split("\r\n")
+    processed = []
+    for i in range(3):
+        processed.append(process_transaction(data[i]))
+        time.sleep(0.2)
+
+    plan = {"content" : generate_monthly_plan(csv_string)}
+    person = {"content" : greetings(mode)}
+    result_arr = [person, plan, processed]
     # Return a regular Response with text content type
-    return JSONResponse(csv_string)
+
+    def safe_to_dict(item):
+        return item.dict() if isinstance(item, BaseModel) else item
+
+    return JSONResponse(content=[safe_to_dict(item) for item in result_arr])
 
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
-
-async def process(user_input: str):
-    data = user_input.split("\r\n")
-
-    processed = []
-    for row in data:
-        processed.append(process_transaction(row))
-        await asyncio.sleep(0.1)
-    return processed
-
 
 def process_transaction(transaction):
     personality = generate_chatbot_prompt(mode)
@@ -160,7 +172,6 @@ def process_transaction(transaction):
         - "gym membership, $25"
         - "bank fee, $5"
         - "gift for friend, $20"
-        
 
         Then Classify the given csv transactions into rational, irrational, or neutral spending. Then provide a short advice on how the user could have spent that money in a more effective way for better personal finance. Here are some examples:
         Rational examples:
@@ -204,7 +215,7 @@ def process_transaction(transaction):
                     },
                     "description": {
                         "type": "string",
-                        "description": "the given description of the transaction"
+                        "description": "Summarize in 3 or less words the store from which the tansaction originates"
                     },
                     "price": {
                         "type": "string",
@@ -229,6 +240,22 @@ def process_transaction(transaction):
     )
 
     return {"date": json.loads(response.message.content[0].text)["date"],"description": json.loads(response.message.content[0].text)["description"],"price": json.loads(response.message.content[0].text)["price"], "category": json.loads(response.message.content[0].text)["category"], "type": json.loads(response.message.content[0].text)["class"], "advice": json.loads(response.message.content[0].text)["advice"]}
+
+def generate_monthly_plan(transactions: str):
+    prompt = """Based on the provided transactions below, analyze the user's monthly expenses and create a plan for how they should be spending before the start of next month. Assume the median Canadian after-tax income is approximately $3,500 per month. Consider recurring expenses such as rent, groceries, transportation, and discretionary spending. Use the user's current spending trends to extrapolate their total monthly expenditure and estimate how much money will be left by month-end. Highlight potential areas for savings and suggest budget optimizations. The output should not use any special characters and should be a 500 words paragraph."
+    Transactions to consider:
+    {}"""
+
+    personality = generate_chatbot_prompt(mode)
+    response = co.chat(
+        model='command-a-03-2025',
+        messages=[
+            {"role": "user", "content": prompt.format(transactions)}
+        ],        
+        temperature=0.2,
+    )
+
+    return response.message.content[0].text
 
 
 def generate_chatbot_prompt(mode):
@@ -298,8 +325,7 @@ def generate_chatbot_prompt(mode):
     return prompt
 
 
-@app.put("/setmode/{m}")
-async def greetings(m):
+def greetings(m):
     mode = m
     prompt = generate_chatbot_prompt(mode)
     response = co.chat(
