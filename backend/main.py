@@ -112,16 +112,10 @@ async def create_upload_file(file: UploadFile):
     doc = {"content": csv_string}
     collection.insert_one(doc)
 
-    #     data = csv_string.split("\r\n")
-    #     processed = []
-    #     for row in data:
-    #         processed.append(process_transaction(row))
-    #         time.sleep(0.2)
-
     data = csv_string.split("\r\n")
     processed = []
-    for i in range(3):
-        processed.append(process_transaction(data[i]))
+    for row in data:
+        processed.append(process_transaction(row))
         time.sleep(0.2)
 
     plan = {"content" : generate_monthly_plan(csv_string)}
