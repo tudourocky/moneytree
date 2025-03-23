@@ -18,7 +18,7 @@ export default function Chart({data}) {
                 data={data}
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
+                outerRadius={200}
                 label
             >
                 {data.map((entry, index) => (

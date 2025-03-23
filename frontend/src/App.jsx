@@ -69,10 +69,10 @@ function App() {
 
     //some api call, fetch, and then affect setChartData
     return (
-        <div className="flex flex-col h-screen w-screen bg-gray-100">
-            <div className="flex flex-row h-[10%] w-full">
+        <div className="flex flex-col h-screen w-screen bg-[#FEFAE0]">
+            <div className="flex flex-row h-[10%] w-full bg-[#D4A373]">
                 <div className="h-full w-[60%] flex items-center justify-center text-4xl">
-                    Anson's Personal Financial Diary
+                    Welcome to your Personal Finance Diary
                 </div>
                 <div className="h-full w-[40%] flex items-center justify-center">
                     <FileUpload file={file} isButtonClicked={isButtonClicked} setFile={setFile} setIsButtonClicked={setIsButtonClicked}/>
@@ -80,7 +80,7 @@ function App() {
             </div>
 
             <div className="flex flex-row h-[80%] w-full">
-                <div className="flex h-full w-[50%] flex-column items-center justify-center">
+                <div className="flex h-full w-[65%] flex-column items-center justify-center">
                     <div className="h-[50%] w-full flex flex-column items-center justify-center">
                         <Chart data={chartData} />
                     </div>
@@ -88,7 +88,7 @@ function App() {
                         <Chat message={message} />
                     </div>
                 </div>
-                <div className="h-full w-[50%] flex items-center justify-center">
+                <div className="h-full w-[35%] flex items-center justify-center">
                     <ExpenseOverview transactions={expenseData} />
                 </div>
             </div>

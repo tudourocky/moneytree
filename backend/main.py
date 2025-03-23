@@ -123,9 +123,9 @@ async def create_upload_file(file: UploadFile):
     
     data = csv_string.split("\r\n")
     processed = []
-    for i in range(5):
+    for i in range(6):
         processed.append(process_transaction(data[i]))
-        time.sleep(0.1)
+        time.sleep(0.3)
     plan = {"content" : generate_monthly_plan(csv_string)}
     person = {"content" : greetings(mode)}
     result_arr = [person, plan, processed]

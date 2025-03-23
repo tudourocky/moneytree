@@ -7,8 +7,8 @@ export default function Chat({message = []}) {
     }
 
     return (
-        <div>
-            <div>
+        <div className="bg-[#E9EDC9]">
+            <div className="bg-[#CCD5AE]">
                 {message[0].content}
             </div>
             <div>

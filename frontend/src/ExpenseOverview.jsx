@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 export default function ExpenseOverview({ transactions = [] }) {
     return (
-        <div className="flex h-full w-full">
+        <div className="flex flex-col h-full w-full p-4 gap-y-6">
             {transactions.map((transaction, index) => (
                 <div key={index}>
                     <ExpenseOverviewCard
@@ -28,13 +28,13 @@ function ExpenseOverviewCard({
     advice,
 }) {
     return (
-        <div>
-            <div>
+        <div className="flex flex-col h-full w-full bg-[#B0C4B1]">
+            <div className="flex flex-row h-full w-full justify-around text-xl">
                 <div>{date}</div>
                 <div>{category}</div>
                 <div>{price}</div>
             </div>
-            <div>
+            <div className="flex flex-row h-full w-full justify-around text-xl">
                 <div>{type}</div>
                 <div>{description}</div>
             </div>
