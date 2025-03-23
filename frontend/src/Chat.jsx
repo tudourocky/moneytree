@@ -2,6 +2,10 @@ import { useState } from "react";
 
 export default function Chat({message = []}) {
 
+    if (!message) {
+        return (<div></div>);
+    }
+
     return (
         <div>
             <div>

@@ -123,7 +123,7 @@ async def create_upload_file(file: UploadFile):
     
     data = csv_string.split("\r\n")
     processed = []
-    for i in range(2):
+    for i in range(5):
         processed.append(process_transaction(data[i]))
         time.sleep(0.1)
     plan = {"content" : generate_monthly_plan(csv_string)}
