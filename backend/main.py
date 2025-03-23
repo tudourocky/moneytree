@@ -8,6 +8,7 @@ import pandas as pd, numpy as np
 import cohere
 import json
 import asyncio
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, conlist
 from config import settings
 
@@ -15,13 +16,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    # Allow requests from your frontend origin
-    allow_origins=["http://localhost:5173"],
-    # Optionally allow requests from additional origins
-    # allow_origins=["*"],  # Use this to allow all origins (less secure)
+    allow_origins=["http://localhost:5173"],  # or ["*"] for all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 mode = "PRO"
@@ -37,6 +35,9 @@ try:
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
+
+db = client.transactionsdb
+collection = db.transcollection
 
 co = cohere.ClientV2(settings.cohere_key)
 
@@ -98,34 +99,26 @@ async def create_upload_file(file: UploadFile):
     file_like_object = io.BytesIO(file_content)
     csv = pdf_to_csv(file_like_object)
 
-    stream = io.StringIO()
-    csv.to_csv(stream, index=False)
-    stream.seek(0)
+    csv_string = csv.to_csv(index=False, header=False)
+    doc = {"content": csv_string}
+    collection.insert_one(doc)
+    # store csv_string into database
+    docs = collection.find()
+    # combined_str = ""
+    # for d in docs:
+    #     print(d)
+    #     combined_str = combined_str + d["content"]
+    # result = process(combined_str)
+    # Return a regular Response with text content type
+    return JSONResponse(csv_string)
 
-    return StreamingResponse(
-        iter([stream.getvalue()]), 
-        media_type="text/csv",
-        headers={
-            'Content-Disposition': 'attachment; filename="data.csv"'
-        }
-    )
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
-@app.post("/process")
-async def process():
-    user_input = """Mar 11,Point of sale purchase-Apos U of T - Scarbo Scarboroughonca,2.70
-    Mar 11,Point of sale purchase-Apos Dentistry ON CA Scarboroughonca,47.70
-    Mar 12,Point of sale purchase-Opos Apple.Com/Bill 866-712-775ONCA,6.77
-    Mar 13,Point of sale purchase-Apos Tim Hortons #23 Scarboroughonca,3.35
-    Mar 14,Point of sale purchase-Opos Tim Hortons #2326 Scarboroughonca,4.20
-    Mar 14,Point of sale purchase-Opos Tcardplus U of T Toronto ONCA,20.00
-    Mar 15,Point of sale purchase-Apos Young Trend Hai Scarboroughonca,18.98
-    Mar 15,Point of sale purchase-Apos Osmow'S Scarboroughonca,17.50
-    Mar 17,Point of sale purchase-Apos Dollarama # 211 Scarboroughonca,10.82""" 
-    data = user_input.splitlines()
+async def process(user_input: str):
+    data = user_input.split("\r\n")
 
     processed = []
     for row in data:

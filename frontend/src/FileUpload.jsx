@@ -9,18 +9,18 @@ export default function FileUpload() {
             if (file == null) {
                 alert("file not uploaded!");
             } else {
-				const formData = new FormData();
+const formData = new FormData();
                 formData.append('file', file);
-                fetch("http://0.0.0.0:8000/getdatafromfile", {
+                fetch("http://localhost:8000/getdatafromfile", {
                     method: "POST",
                     body: formData,
                 })
                     .then((response) => 
-						response.json()
-						)
-					.then((data) => {
-						console.log(data)
-					})
+response.json()
+)
+.then((data) => {
+console.log(data)
+})
                     .catch((error) => console.error(error));
             }
         }
