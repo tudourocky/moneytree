@@ -12,12 +12,9 @@ mode = "PRO"
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
-
-uri = settings.database_url 
-
+uri = settings.database_url
 # Create a new client and connect to the server
 client = MongoClient(uri)
-
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
@@ -25,13 +22,18 @@ try:
 except Exception as e:
     print(e)
 
+
 co = cohere.ClientV2(settings.cohere_key)
 
 @app.get("/")
 async def root():
-    return {"message": "welcome to moneyTreeAPI"}
+    return {"message": "hello world"}
 
-@app.post("/process/")
+@app.get("/hello")
+async def hello():
+    return "hello"
+
+@app.post("/process")
 async def process():
     user_input = """Mar 11,Point of sale purchase-Apos U of T - Scarbo Scarboroughonca,2.70
     Mar 11,Point of sale purchase-Apos Dentistry ON CA Scarboroughonca,47.70
@@ -43,6 +45,11 @@ async def process():
     Mar 15,Point of sale purchase-Apos Osmow'S Scarboroughonca,17.50
     Mar 17,Point of sale purchase-Apos Dollarama # 211 Scarboroughonca,10.82""" 
     data = user_input.splitlines()
+
+    # for row in data:
+    #     print(row)
+
+    # print(len(data))
 
     processed = []
     for row in data:
