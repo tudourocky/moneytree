@@ -2,13 +2,10 @@ from fastapi import FastAPI, HTTPException
 
 import cohere
 import json
-import asyncio
 from pydantic import BaseModel, conlist
 from config import settings
 
 app = FastAPI()
-
-mode = "PRO"
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
@@ -28,14 +25,16 @@ try:
 except Exception as e:
     print(e)
 
+
 co = cohere.ClientV2(settings.cohere_key)
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
-@app.get("/cohere")
+@app.get("/process")
 async def process_transaction():
+    
     return {"message": "Process Transaction"}
 
 @app.post("/init_chat/{personality}")
@@ -94,34 +93,21 @@ async def initialize_chatbot(personality):
 
     prompt = ""
 
-    if(mode == "PRO"):
+    if(personality == "PRO"):
         prompt = prompt_pro
-    elif(mode == "FRIEND"):
+    elif(personality == "FRIEND"):
         prompt = prompt_friend
-    elif(mode == "MOM"):
+    elif(personality == "MOM"):
         prompt = prompt_mom
     else:
         raise HTTPException(status_code=404, detail="invalid personality")
-
-    return prompt
-
-
-@app.put("/setmode/{m}")
-async def greetings(m):
-    mode = m
-    prompt = generate_chatbot_prompt(mode)
     response = co.chat(
-        model='command-a-03-2025',
+        model='16c03f0f-ed9c-48da-a391-7b6487c58bcc-ft',
         messages=[
             {"role": "system", "content": prompt },
             {"role": "user", "content": "Please give an one sentence introduction about yourself"}
-        ],        
-        temperature=0.2,
+        ],
+        temperature=0.2
     )
 
     return response.message.content[0].text
-
-    
-    # return json.loads(response.message.content[0].text)["intro"]
-    # return response.message.content[0].text)["text"]
-    return response
