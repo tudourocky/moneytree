@@ -1,7 +1,7 @@
 //import "./App.css";
 import { useState, useEffect } from "react";
 import Chart from "./Chart";
-//import Chatbox from "./Chatbox";
+import Chat from "./Chat";
 import ExpenseOverview from "./ExpenseOverview";
 import FileUpload from "./FileUpload";
 
@@ -23,6 +23,7 @@ function App() {
     const [expenseData, setExpenseData] = useState([])
     const [file, setFile] = useState(null);
     const [isButtonClicked, setIsButtonClicked] = useState(0);
+    const [message, setMessage] = useState("");
 
     useEffect(() => {
         if (isButtonClicked) {
@@ -59,6 +60,7 @@ function App() {
                         }
                         console.log(processData(data[2]))
                         setChartData(processData(data[2]));
+                        setMessage([data[0], data[1]])
                     })
                     .catch((error) => console.error(error));
             }
@@ -83,7 +85,7 @@ function App() {
                         <Chart data={chartData} />
                     </div>
                     <div className="h-[50%] w-full flex flex-column items-center justify-center">
-                        For Comments, not yet done
+                        <Chat message={message} />
                     </div>
                 </div>
                 <div className="h-full w-[50%] flex items-center justify-center">
