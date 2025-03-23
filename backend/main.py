@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 import io
 import camelot
 import pandas as pd, numpy as np
@@ -26,13 +26,9 @@ app.add_middleware(
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-
 uri = settings.database_url
-
 # Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
-
+client = MongoClient(uri)
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
@@ -100,17 +96,10 @@ async def create_upload_file(file: UploadFile):
     file_like_object = io.BytesIO(file_content)
     csv = pdf_to_csv(file_like_object)
 
-    stream = io.StringIO()
-    csv.to_csv(stream, index=False)
-    stream.seek(0)
+    csv_string = csv.to_csv(index=False, header=False)
 
-    return StreamingResponse(
-        iter([stream.getvalue()]), 
-        media_type="text/csv",
-        headers={
-            'Content-Disposition': 'attachment; filename="data.csv"'
-        }
-    )
+    # Return a regular Response with text content type
+    return JSONResponse({"csv_data": csv_string})
 
 
 @app.get("/")
