@@ -1,20 +1,15 @@
 import { useState } from 'react'
 import './App.css'
+import FileUpload from "./FileUpload.jsx"
 
-const FileUpload = () => {
-  const [file, setFile] = useState(null);
+function App() {
+    return (
+        <FileUpload/>
+    );
+}
 
-  // Handle file selection
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
 
-    if (selectedFile && selectedFile.type === "application/pdf") {
-      setFile(selectedFile);
-    } else {
-      alert("Please upload a valid PDF file.");
-      setFile(null);
-    }
-  };
+export default App;
 
   // Handle file upload (example: console logging)
   const handleUpload = () => {
