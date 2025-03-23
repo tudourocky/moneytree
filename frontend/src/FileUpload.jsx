@@ -49,8 +49,8 @@ export default function FileUpload() {
     };
 
     return (
-        <div className="file-upload-box">
-            <label className="file-input-label">
+        <div className="">
+            <label className="">
                 <input
                     type="file"
                     accept="application/pdf"
