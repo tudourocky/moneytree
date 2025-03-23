@@ -2,7 +2,7 @@ import "./App.css";
 import { useState } from "react";
 import Chart from "./Chart";
 import Chatbox from "./Chatbox";
-import ExpenseTracker from "./ExpenseTracker";
+import ExpenseOverview from "./ExpenseOverview";
 import FileUpload from "./FileUpload";
 
 function App() {
@@ -21,6 +21,7 @@ function App() {
             <div>
                 <FileUpload/>
                 <Chart data={chartData}/>
+                <ExpenseOverview data={chartData}/>
             </div>
         </div>
     );
