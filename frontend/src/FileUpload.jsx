@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 
-export default function FileUpload({file, setFile, isButtonClicked, setIsButtonClicked}) {
-
+export default function FileUpload({
+    file,
+    setFile,
+    isButtonClicked,
+    setIsButtonClicked,
+}) {
     // Handle file selection
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -25,21 +29,23 @@ export default function FileUpload({file, setFile, isButtonClicked, setIsButtonC
     };
 
     return (
-        <div className="z-50">
-            <label className="">
-                <input
-                    type="file"
-                    accept="application/pdf"
-                    onChange={handleFileChange}
-                />
-                <div className="upload-box">📄 Click or Drag to Upload PDF</div>
-            </label>
+        <div className="z-50 flex flex-row w-full h-full">
+            <div className="flex w-0.7 h-full">
+                <label>
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                    />
+                    <div className="w-full h-full">📄 Click or Drag to Upload PDF</div>
+                </label>
+            </div>
 
             {file && <p>Selected File: {file.name}</p>}
 
-            <button onClick={handleUpload} className="upload-button">
-                Upload
-            </button>
+            <div className="flex w-0.3 h-full">
+                <button onClick={handleUpload}>Upload</button>
+            </div>
         </div>
     );
 }

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 export default function ExpenseOverview({ transactions = [] }) {
     return (
-        <div>
+        <div className="flex h-full w-full">
             {transactions.map((transaction, index) => (
                 <div key={index}>
                     <ExpenseOverviewCard

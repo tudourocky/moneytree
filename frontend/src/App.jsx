@@ -69,9 +69,9 @@ function App() {
 
     //some api call, fetch, and then affect setChartData
     return (
-        <div className="flex flex-col h-screen w-screen">
+        <div className="flex flex-col h-screen w-screen bg-gray-100">
             <div className="flex flex-row h-[10%] w-full">
-                <div className="h-full w-[60%] flex items-center justify-center">
+                <div className="h-full w-[60%] flex items-center justify-center text-4xl">
                     Anson's Personal Financial Diary
                 </div>
                 <div className="h-full w-[40%] flex items-center justify-center">
@@ -79,8 +79,8 @@ function App() {
                 </div>
             </div>
 
-            <div className="flex flex-row w-full">
-                <div>
+            <div className="flex flex-row h-[80%] w-full">
+                <div className="flex h-full w-[50%] flex-column items-center justify-center">
                     <div className="h-[50%] w-full flex flex-column items-center justify-center">
                         <Chart data={chartData} />
                     </div>
