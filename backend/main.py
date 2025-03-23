@@ -7,22 +7,27 @@ import pandas as pd, numpy as np
 
 import cohere
 import json
+import asyncio
+import time
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, conlist
 from config import settings
+from pydantic import BaseModel
+
+app = FastAPI()
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    # Allow requests from your frontend origin
-    allow_origins=["http://localhost:5173"],
-    # Optionally allow requests from additional origins
-    # allow_origins=["*"],  # Use this to allow all origins (less secure)
+    allow_origins=["http://localhost:5173"],  # or ["*"] for all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+
+mode = "PRO"
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
@@ -35,6 +40,9 @@ try:
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
+
+db = client.transactionsdb
+collection = db.transcollection
 
 co = cohere.ClientV2(settings.cohere_key)
 
@@ -104,20 +112,151 @@ async def create_upload_file(file: UploadFile):
 
     csv_string = csv.to_csv(index=False, header=False)
 
+    # store csv_string into database
+    doc = {"content": csv_string}
+    collection.insert_one(doc)
+
+    data = csv_string.split("\r\n")
+    processed = []
+    for row in data:
+        processed.append(process_transaction(row))
+        time.sleep(0.2)
+
+    plan = {"content" : generate_monthly_plan(csv_string)}
+    person = {"content" : greetings(mode)}
+    result_arr = [person, plan, processed]
     # Return a regular Response with text content type
-    return JSONResponse({"csv_data": csv_string})
+
+    def safe_to_dict(item):
+        return item.dict() if isinstance(item, BaseModel) else item
+
+    return JSONResponse(content=[safe_to_dict(item) for item in result_arr])
 
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
-@app.get("/process")
-async def process_transaction():
-    return {"message": "Process Transaction"}
+def process_transaction(transaction):
+    personality = generate_chatbot_prompt(mode)
+    prompt = """Classify the given csv transactions into cagetories of spending within the types of rent, groceries, eating out, transportation, entertainment, or other. Here are some examples:
+        Rent examples:
+        - "rent, $1200"
+        - "housing, $1400"
+        - "Jan rent, $1000"
+        - "monthly lease payment, $950"
 
-@app.post("/init_chat/{personality}")
-async def initialize_chatbot(personality):
+        Groceries examples:
+        - "weekly groceries, $60"
+        - "supermarket shopping, $45"
+
+        Eating out examples:
+        - "fast food lunch, $12"
+        - "dinner with friends, $35"
+        - "coffee shop, $8"
+
+        Transportation examples:
+        - "subway pass, $30"
+        - "ride share, $20"
+        - "gas refill, $50"
+
+        Entertainment examples:
+        - "movie ticket, $15"
+        - "concert ticket, $80"
+        - "gaming subscription, $10"
+
+        Other examples:
+        - "phone bill, $40"
+        - "gym membership, $25"
+        - "bank fee, $5"
+        - "gift for friend, $20"
+
+        Then Classify the given csv transactions into rational, irrational, or neutral spending. Then provide a short advice on how the user could have spent that money in a more effective way for better personal finance. Here are some examples:
+        Rational examples:
+        - "local breakfast, $8"
+        - "weekly groceries, $45"
+        - "bus fare, $25"
+        - "rent payment, $1200"
+        - "prescription medication, $20"
+
+        Irrational examples:
+        - "gourmet breakfast, $100"
+        - "impulse coffee, $50"
+        - "designer sneakers, $250"
+        - "luxury gadget, $400"
+        - "extravagant dinner, $150"
+
+        Neutral examples:
+        - "utility bill, $60"
+        - "bank fee, $20"
+        - "online subscription, $10"
+        - "ATM fee, $5"
+        - "public parking, $15"
+
+        Transaction to classify:
+        {}"""
+
+    response = co.chat(
+        model='command-a-03-2025',
+        messages=[
+            {"role": "user", "content": personality + prompt.format(transaction)}
+        ],
+        temperature=0.0,
+        response_format={
+            "type": "json_object",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "date": "date of the transaction"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Summarize in 3 or less words the store from which the tansaction originates"
+                    },
+                    "price": {
+                        "type": "string",
+                        "price": "value of the transaction"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["rent", "groceries", "eating out", "transportation", "entertainment", "other"]
+                    },
+                    "class": {
+                        "type": "string",
+                        "enum": ["rational", "irrational", "neutral"]
+                    },
+                    "advice": {
+                        "type": "string",
+                        "description": "A short advice on how the user could have spent that money in a more effective way for better personal finance."
+                    }
+                },
+                "required": ["date", "description", "price", "category", "class", "advice"]
+            }
+        }
+    )
+
+    return {"date": json.loads(response.message.content[0].text)["date"],"description": json.loads(response.message.content[0].text)["description"],"price": json.loads(response.message.content[0].text)["price"], "category": json.loads(response.message.content[0].text)["category"], "type": json.loads(response.message.content[0].text)["class"], "advice": json.loads(response.message.content[0].text)["advice"]}
+
+def generate_monthly_plan(transactions: str):
+    prompt = """Based on the provided transactions below, analyze the user's monthly expenses and create a plan for how they should be spending before the start of next month. Assume the median Canadian after-tax income is approximately $3,500 per month. Consider recurring expenses such as rent, groceries, transportation, and discretionary spending. Use the user's current spending trends to extrapolate their total monthly expenditure and estimate how much money will be left by month-end. Highlight potential areas for savings and suggest budget optimizations. The output should not use any special characters and should be a 500 words paragraph."
+    Transactions to consider:
+    {}"""
+
+    personality = generate_chatbot_prompt(mode)
+    response = co.chat(
+        model='command-a-03-2025',
+        messages=[
+            {"role": "user", "content": prompt.format(transactions)}
+        ],        
+        temperature=0.2,
+    )
+
+    return response.message.content[0].text
+
+
+def generate_chatbot_prompt(mode):
     # initialize personality
     prompt_pro = """
     You are an expert personal finance advisor. Your role is to provide comprehensive, in-depth, and accurate guidance on a wide range of personal finance topics, including budgeting, savings, investments, debt management, retirement planning, tax strategies, insurance, and overall financial planning.
@@ -172,21 +311,28 @@ async def initialize_chatbot(personality):
 
     prompt = ""
 
-    if(personality == "PRO"):
+    if(mode == "PRO"):
         prompt = prompt_pro
-    elif(personality == "FRIEND"):
+    elif(mode == "FRIEND"):
         prompt = prompt_friend
-    elif(personality == "MOM"):
+    elif(mode == "MOM"):
         prompt = prompt_mom
     else:
         raise HTTPException(status_code=404, detail="invalid personality")
+
+    return prompt
+
+
+def greetings(m):
+    mode = m
+    prompt = generate_chatbot_prompt(mode)
     response = co.chat(
-        model='16c03f0f-ed9c-48da-a391-7b6487c58bcc-ft',
+        model='command-a-03-2025',
         messages=[
             {"role": "system", "content": prompt },
             {"role": "user", "content": "Please give an one sentence introduction about yourself"}
-        ],
-        temperature=0.2
+        ],        
+        temperature=0.2,
     )
-    
+
     return response.message.content[0].text
