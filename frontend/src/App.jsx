@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import Chart from "./Chart";
 import Chatbox from "./Chatbox";
+import ExpenseTracker from "./ExpenseTracker";
 
 
 const FileUpload = () => {
@@ -28,6 +29,17 @@ const FileUpload = () => {
       alert("No file selected!");
     }
   };
+
+  const App = () => {
+    const [expenses] = useState([
+      { category: "Groceries", amount: 150 },
+      { category: "Transport", amount: 45 },
+      { category: "Eating Out", amount: 80 },
+      { category: "Rent", amount: 500 },
+      { category: "Others", amount: 120 },
+      { category: "Savings", amount: 250 },
+    ]);
+  }
 
   return (
     
@@ -61,6 +73,7 @@ const FileUpload = () => {
       </div>
 
     </div>
+    
   );
 };
 
