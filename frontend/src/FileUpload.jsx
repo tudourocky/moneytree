@@ -1,30 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function FileUpload() {
-    const [file, setFile] = useState(null);
-    const [isButtonClicked, setIsButtonClicked] = useState(0);
-
-    useEffect(() => {
-        if (isButtonClicked) {
-            if (file == null) {
-                alert("file not uploaded!");
-            } else {
-const formData = new FormData();
-                formData.append('file', file);
-                fetch("http://localhost:8000/getdatafromfile", {
-                    method: "POST",
-                    body: formData,
-                })
-                    .then((response) => 
-response.json()
-)
-.then((data) => {
-console.log(data)
-})
-                    .catch((error) => console.error(error));
-            }
-        }
-    }, [isButtonClicked, file]);
+export default function FileUpload({file, setFile, isButtonClicked, setIsButtonClicked}) {
 
     // Handle file selection
     const handleFileChange = (event) => {
