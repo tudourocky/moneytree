@@ -57,8 +57,8 @@ function App() {
                             }));
                             return chartData
                         }
-                        console.log(processData(data))
-                        setChartData(processData(data));
+                        console.log(processData(data[2]))
+                        setChartData(processData(data[2]));
                     })
                     .catch((error) => console.error(error));
             }
@@ -87,7 +87,7 @@ function App() {
                     </div>
                 </div>
                 <div className="h-full w-[50%] flex items-center justify-center">
-                    <ExpenseOverview data={expenseData} />
+                    <ExpenseOverview transactions={expenseData} />
                 </div>
             </div>
         </div>

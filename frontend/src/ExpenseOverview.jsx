@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function ExpenseOverview({ transactions }) {
+export default function ExpenseOverview({ transactions = [] }) {
     return (
         <div>
             {transactions.map((transaction, index) => (
