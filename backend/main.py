@@ -10,6 +10,8 @@ import json
 from pydantic import BaseModel, conlist
 from config import settings
 
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     # Allow requests from your frontend origin
@@ -20,8 +22,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
-app = FastAPI()
 
 
 # MongoDB Setup
