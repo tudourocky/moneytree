@@ -13,6 +13,7 @@ frontend/.next/
 frontend/.nuxt/
 frontend/.parcel-cache/
 frontend/yarn.lock
+frontend/package-lock.json
 
 # Ignore Python-specific files and folders in the backend folder
 backend/__pycache__/
