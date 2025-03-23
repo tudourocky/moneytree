@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 import io
 import camelot
 import pandas as pd, numpy as np
@@ -16,6 +16,8 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # or ["*"] for all origins
@@ -23,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 mode = "PRO"
 
@@ -108,6 +111,7 @@ async def create_upload_file(file: UploadFile):
     csv = pdf_to_csv(file_like_object)
 
     csv_string = csv.to_csv(index=False, header=False)
+
     # store csv_string into database
     doc = {"content": csv_string}
     collection.insert_one(doc)
