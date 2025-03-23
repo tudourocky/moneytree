@@ -12,9 +12,19 @@ mode = "PRO"
 
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
+<<<<<<< HEAD
 uri = settings.database_url
 # Create a new client and connect to the server
 client = MongoClient(uri)
+=======
+from pymongo.server_api import ServerApi
+
+uri = settings.database_url
+
+# Create a new client and connect to the server
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+>>>>>>> parent of 98d41c8 (updated mongoDB version)
 # Send a ping to confirm a successful connection
 try:
     client.admin.command('ping')
@@ -22,16 +32,21 @@ try:
 except Exception as e:
     print(e)
 
-
 co = cohere.ClientV2(settings.cohere_key)
 
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
+<<<<<<< HEAD
 @app.get("/hello")
 async def hello():
     return "hello"
+=======
+@app.get("/cohere")
+async def process_transaction():
+    return {"message": "Process Transaction"}
+>>>>>>> parent of 98d41c8 (updated mongoDB version)
 
 @app.post("/process")
 async def process():
@@ -240,6 +255,12 @@ async def greetings(m):
         temperature=0.2,
     )
 
+<<<<<<< HEAD
     return response.message.content[0].text
 
     
+=======
+    # return json.loads(response.message.content[0].text)["intro"]
+    # return response.message.content[0].text)["text"]
+    return response
+>>>>>>> parent of 98d41c8 (updated mongoDB version)
