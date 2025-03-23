@@ -2,10 +2,19 @@
   border: 2px dashed #007bff;
   padding: 20px;
   text-align: center;
-  width: 300px;
   border-radius: 10px;
+  width: 300px;
+  margin: 20px auto;
   cursor: pointer;
-  margin: auto;
+  background: #f8f9fa;
+  transition: background 0.3s;
+  position: absolute;
+  top: 50px;
+  left: 1000px;
+}
+
+.file-upload-box.drag-active {
+  background: #e0f3ff;
 }
 
 .file-input-label input {
@@ -14,21 +23,29 @@
 
 .upload-box {
   padding: 10px;
-  background-color: #f8f9fa;
+  font-size: 16px;
   color: #007bff;
-  border-radius: 5px;
 }
 
 .upload-button {
   margin-top: 10px;
-  padding: 8px 15px;
+  padding: 8px 16px;
   background: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
+  border-radius: 5px;
 }
 
 .upload-button:hover {
   background: #0056b3;
+}
+
+.vertical-line {
+  width: 2px;
+  height: 100vh;
+  background-color: #333;
+  position: fixed; /* Stays in place */
+  left: 50%; /* Centers the line */
+  top: 0;
 }

@@ -1,4 +1,3 @@
-from fastapi import FastAPI, HTTPException
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -11,8 +10,6 @@ import json
 from pydantic import BaseModel, conlist
 from config import settings
 
-app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
     # Allow requests from your frontend origin
@@ -24,13 +21,18 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+app = FastAPI()
+
+
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
+uri = settings.database_url
 from pymongo.server_api import ServerApi
 
 uri = settings.database_url
 
 # Create a new client and connect to the server
+client = MongoClient(uri)
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 # Send a ping to confirm a successful connection
@@ -113,11 +115,13 @@ async def create_upload_file(file: UploadFile):
     )
 
 
+co = cohere.ClientV2(settings.cohere_key)
+
 @app.get("/")
 async def root():
     return {"message": "hello world"}
 
-@app.get("/cohere")
+@app.get("/process")
 async def process_transaction():
     return {"message": "Process Transaction"}
 
@@ -193,7 +197,5 @@ async def initialize_chatbot(personality):
         ],
         temperature=0.2
     )
-
-    # return json.loads(response.message.content[0].text)["intro"]
-    # return response.message.content[0].text)["text"]
-    return response
+    
+    return response.message.content[0].text
