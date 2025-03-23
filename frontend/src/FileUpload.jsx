@@ -49,7 +49,7 @@ console.log(data)
     };
 
     return (
-        <div className="">
+        <div className="z-50">
             <label className="">
                 <input
                     type="file"
@@ -61,7 +61,7 @@ console.log(data)
 
             {file && <p>Selected File: {file.name}</p>}
 
-            <button onClick={handleUpload} className="upload-button">
+            <button onClick={handleUpload} className="upload-button z-50">
                 Upload
             </button>
         </div>
