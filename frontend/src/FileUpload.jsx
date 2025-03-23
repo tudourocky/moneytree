@@ -1,38 +1,69 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from "react";
 
-function FileUpload() {
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
+export default function FileUpload() {
+    const [file, setFile] = useState(null);
+    const [isButtonClicked, setIsButtonClicked] = useState(0);
 
-  const handleChange = (e) => {
-    setFile(e.target.files[0]);
-  };
+    useEffect(() => {
+        if (isButtonClicked) {
+            if (file == null) {
+                alert("file not uploaded!");
+            } else {
+				const formData = new FormData();
+                formData.append('file', file);
+                fetch("http://0.0.0.0:8000/getdatafromfile", {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then((response) => 
+						response.json()
+						)
+					.then((data) => {
+						console.log(data)
+					})
+                    .catch((error) => console.error(error));
+            }
+        }
+    }, [isButtonClicked, file]);
 
-  const handleUpload = async () => {
-    const formData = new FormData();
-    formData.append("file", file);
+    // Handle file selection
+    const handleFileChange = (event) => {
+        const selectedFile = event.target.files[0];
+        if (selectedFile && selectedFile.type === "application/pdf") {
+            setFile(selectedFile);
+        } else {
+            alert("Please upload a valid PDF file.");
+            setFile(null);
+        }
+    };
 
-    try {
-      const res = await axios.post("http://localhost:8000/upload/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setMessage(res.data.message);
-    } catch (err) {
-      setMessage("Upload failed.");
-      console.error(err);
-    }
-  };
+    // Handle file upload (example: console logging)
+    const handleUpload = () => {
+        if (file) {
+            setIsButtonClicked(1);
+            console.log("File uploaded:", file);
+            alert(`Uploaded: ${file.name}`);
+        } else {
+            alert("No file selected!");
+        }
+    };
 
-  return (
-    <div>
-      <input type="file" onChange={handleChange} />
-      <button onClick={handleUpload}>Upload</button>
-      <p>{message}</p>
-    </div>
-  );
+    return (
+        <div className="file-upload-box">
+            <label className="file-input-label">
+                <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleFileChange}
+                />
+                <div className="upload-box">📄 Click or Drag to Upload PDF</div>
+            </label>
+
+            {file && <p>Selected File: {file.name}</p>}
+
+            <button onClick={handleUpload} className="upload-button">
+                Upload
+            </button>
+        </div>
+    );
 }
-
-export default FileUpload;
