@@ -84,10 +84,16 @@ async def create_upload_file(file: UploadFile):
             # print(new_table)
             new_table_list.append(new_table)
 
+        # concat the multiple tables
         result = pd.concat(new_table_list)
         result.reset_index(drop=True)
 
+        # only need date, transactions, withdrawn columns
         result_for_csv = result.filter(['Date', 'Transactions', 'withdrawn ($)'])
+        result_for_csv.reset_index(drop=True)
+
+        # remove rows where it's transactions is n/a
+        result_for_csv = result_for_csv[~result_for_csv['withdrawn ($)'].isna()]
         result_for_csv.reset_index(drop=True)
 
         return result_for_csv
