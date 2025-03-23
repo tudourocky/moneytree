@@ -1,11 +1,81 @@
 import './App.css'
-import FileUpload from "./FileUpload.jsx"
+import Chart from "./Chart";
+import Chatbox from "./Chatbox";
+import ExpenseTracker from "./ExpenseTracker";
 
-function App() {
-    return (
-        <FileUpload/>
-    );
-}
+
+const FileUpload = () => {
+  const [file, setFile] = useState(null);
+
+  // Handle file selection
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      setFile(selectedFile);
+    } else {
+      alert("Please upload a valid PDF file.");
+      setFile(null);
+    }
+  };
+
+  // Handle file upload (example: console logging)
+  const handleUpload = () => {
+    if (file) {
+      console.log("File uploaded:", file);
+      alert(`Uploaded: ${file.name}`);
+    } else {
+      alert("No file selected!");
+    }
+  };
+
+  const App = () => {
+    const [expenses] = useState([
+      { category: "Groceries", amount: 150 },
+      { category: "Transport", amount: 45 },
+      { category: "Eating Out", amount: 80 },
+      { category: "Rent", amount: 500 },
+      { category: "Others", amount: 120 },
+      { category: "Savings", amount: 250 },
+    ]);
+  }
+
+  return (
+    
+
+    <div className="container">
+      <div className="vertical-line"></div> {/* Vertical Line */}
+      
+    
+
+    <div className="chart-container">
+      <h3 className="chart-title">Expense Breakdown</h3> {/* Title */}
+      <Chart /> {/* The Pie Chart Component */}
+
+
+
+    <div className="file-upload-box">
+      <label className="file-input-label">
+        <input type="file" accept="application/pdf" onChange={handleFileChange} />
+        <div className="upload-box">📄 Click or Drag to Upload PDF</div>
+      </label>
+      
+      {file && <p>Selected File: {file.name}</p>}
+
+      <button onClick={handleUpload} className="upload-button">
+        Upload
+      </button>
+    </div></div>
+
+    <div className="app">
+      <Chatbox />
+      </div>
+
+    </div>
+    
+  );
+};
+
 
 
 export default App;
