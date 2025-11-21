@@ -122,10 +122,27 @@ async def create_upload_file(file: UploadFile):
 
     
     data = csv_string.split("\r\n")
-    processed = []
-    for i in range(6):
-        processed.append(process_transaction(data[i]))
-        time.sleep(0.3)
+    # Filter out empty rows
+    valid_transactions = [row for row in data if row.strip()]
+    
+    # Limit concurrent requests to avoid rate limiting (adjust based on API limits)
+    semaphore = asyncio.Semaphore(10)  # Process up to 10 transactions concurrently
+    
+    # Process transactions concurrently using asyncio
+    async def process_transaction_async(transaction):
+        async with semaphore:
+            try:
+                return await run_in_threadpool(process_transaction, transaction)
+            except Exception as e:
+                print(f"Error processing transaction: {e}")
+                return None
+    
+    # Process all transactions concurrently
+    tasks = [process_transaction_async(transaction) for transaction in valid_transactions]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Filter out None results and exceptions
+    processed = [result for result in results if result is not None and not isinstance(result, Exception)]
     plan = {"content" : generate_monthly_plan(csv_string)}
     person = {"content" : greetings(mode)}
     result_arr = [person, plan, processed]
@@ -214,7 +231,7 @@ def process_transaction(transaction):
                 "properties": {
                     "date": {
                         "type": "string",
-                        "date": "date of the transaction"
+                        "description": "date of the transaction"
                     },
                     "description": {
                         "type": "string",
@@ -222,7 +239,7 @@ def process_transaction(transaction):
                     },
                     "price": {
                         "type": "string",
-                        "price": "value of the transaction"
+                        "description": "value of the transaction"
                     },
                     "category": {
                         "type": "string",
