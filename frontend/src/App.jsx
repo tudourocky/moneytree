@@ -4,6 +4,7 @@ import Chart from "./Chart";
 import Chat from "./Chat";
 import ExpenseOverview from "./ExpenseOverview";
 import FileUpload from "./FileUpload";
+import RoleSelector from "./RoleSelector";
 
 function convertPriceToNumber(priceString) {
     // Specifically for dollar format
@@ -25,6 +26,7 @@ function App() {
     const [isButtonClicked, setIsButtonClicked] = useState(0);
     const [message, setMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [mode, setMode] = useState("PRO");
 
     useEffect(() => {
         if (isButtonClicked) {
@@ -34,7 +36,7 @@ function App() {
                 setIsLoading(true);
                 const formData = new FormData();
                 formData.append("file", file);
-                fetch("http://localhost:8000/getdatafromfile", {
+                fetch(`http://localhost:8000/getdatafromfile?mode=${mode}`, {
                     method: "POST",
                     body: formData,
                 })
@@ -71,7 +73,7 @@ function App() {
                     });
             }
         }
-    }, [isButtonClicked, file]);
+            }, [isButtonClicked, file, mode]);
 
     //some api call, fetch, and then affect setChartData
     return (
@@ -106,8 +108,11 @@ function App() {
                     </div>
                     <h1 className="text-2xl font-bold text-black tracking-tight font-serif">Insight Wallet</h1>
                 </div>
-                <div className="w-1/3">
-                    <FileUpload file={file} isButtonClicked={isButtonClicked} setFile={setFile} setIsButtonClicked={setIsButtonClicked} />
+                <div className="flex items-center gap-4">
+                    <RoleSelector mode={mode} setMode={setMode} />
+                    <div className="w-1/3">
+                        <FileUpload file={file} isButtonClicked={isButtonClicked} setFile={setFile} setIsButtonClicked={setIsButtonClicked} />
+                    </div>
                 </div>
             </header>
 

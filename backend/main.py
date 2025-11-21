@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
@@ -25,8 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-mode = "PRO"
-
 # MongoDB Setup
 from pymongo.mongo_client import MongoClient
 uri = settings.database_url
@@ -46,7 +44,7 @@ co = cohere.ClientV2(settings.cohere_key)
 
 
 @app.post("/getdatafromfile")
-async def create_upload_file(file: UploadFile):
+async def create_upload_file(file: UploadFile, mode: str = Query("PRO", description="Mode: PRO, FRIEND, or MOM")):
 
     def pdf_to_csv(file):
         # Read tables, extract list
@@ -132,7 +130,7 @@ async def create_upload_file(file: UploadFile):
     async def process_transaction_async(transaction):
         async with semaphore:
             try:
-                return await run_in_threadpool(process_transaction, transaction)
+                return await run_in_threadpool(process_transaction, transaction, mode)
             except Exception as e:
                 print(f"Error processing transaction: {e}")
                 return None
@@ -143,7 +141,7 @@ async def create_upload_file(file: UploadFile):
     
     # Filter out None results and exceptions
     processed = [result for result in results if result is not None and not isinstance(result, Exception)]
-    plan = {"content" : generate_monthly_plan(csv_string)}
+    plan = {"content" : generate_monthly_plan(csv_string, mode)}
     person = {"content" : greetings(mode)}
     result_arr = [person, plan, processed]
     # Return a regular Response with text content type
@@ -158,7 +156,7 @@ async def create_upload_file(file: UploadFile):
 async def root():
     return {"message": "hello world"}
 
-def process_transaction(transaction):
+def process_transaction(transaction, mode: str = "PRO"):
     personality = generate_chatbot_prompt(mode)
     # processed.append(await run_in_threadpool(process_transaction, data[i]))
     prompt = """Classify the given csv transactions into cagetories of spending within the types of rent, groceries, eating out, transportation, entertainment, or other. Here are some examples:
@@ -261,18 +259,35 @@ def process_transaction(transaction):
 
     return {"date": json.loads(response.message.content[0].text)["date"],"description": json.loads(response.message.content[0].text)["description"],"price": json.loads(response.message.content[0].text)["price"], "category": json.loads(response.message.content[0].text)["category"], "type": json.loads(response.message.content[0].text)["class"], "advice": json.loads(response.message.content[0].text)["advice"]}
 
-def generate_monthly_plan(transactions: str):
-    prompt = """Based on the provided transactions below, analyze the user's monthly expenses and create a plan for how they should be spending before the start of next month. Assume the median Canadian after-tax income is approximately $3,500 per month. Consider recurring expenses such as rent, groceries, transportation, and discretionary spending. Use the user's current spending trends to extrapolate their total monthly expenditure and estimate how much money will be left by month-end. Highlight potential areas for savings and suggest budget optimizations. The output should not use any special characters and should be a 250 words paragraph."
-    Transactions to consider:
-    {}"""
+def generate_monthly_plan(transactions: str, mode: str = "PRO"):
+    # Add mode-specific instructions to reinforce personality
+    mode_instruction = ""
+    if mode == "MOM":
+        mode_instruction = " Remember, you're a tough-love mom. Be direct, show some frustration with poor spending habits, use phrases like 'you need to', 'this is unacceptable', 'I'm disappointed', but still show you care. Don't sugarcoat anything."
+    elif mode == "FRIEND":
+        mode_instruction = " Remember, you're a supportive friend. Be warm, encouraging, and use friendly language. Use phrases like 'I understand', 'you've got this', 'let's work on this together'."
+    elif mode == "PRO":
+        mode_instruction = " Remember, you're a professional advisor. Be expert, clear, and objective. Use professional terminology and structured advice."
+    
+    prompt_template = """Based on the provided transactions below, analyze the user's monthly expenses and create a plan for how they should be spending before the start of next month. Assume the median Canadian after-tax income is approximately $3,500 per month. Consider recurring expenses such as rent, groceries, transportation, and discretionary spending. Use the user's current spending trends to extrapolate their total monthly expenditure and estimate how much money will be left by month-end. Highlight potential areas for savings and suggest budget optimizations.{}
+
+The output should not use any special characters and should be a 250 words paragraph.
+
+Transactions to consider:
+{}"""
+
+    prompt = prompt_template.format(mode_instruction, transactions)
 
     personality = generate_chatbot_prompt(mode)
+    # Use higher temperature for more personality expression, especially for MOM mode
+    temperature = 0.5 if mode == "MOM" else 0.3 if mode == "FRIEND" else 0.2
     response = co.chat(
         model='command-a-03-2025',
         messages=[
-            {"role": "user", "content": prompt.format(transactions)}
+            {"role": "system", "content": personality},
+            {"role": "user", "content": prompt}
         ],        
-        temperature=0.2,
+        temperature=temperature,
     )
 
     return response.message.content[0].text
@@ -359,23 +374,26 @@ def greetings(m):
 
     return response.message.content[0].text
 
-chat_history = []
+chat_history = {}
 
 @app.post("/chat/{request}")
-async def chat(request: str):
+async def chat(request: str, mode: str = Query("PRO", description="Mode: PRO, FRIEND, or MOM")):
     # Send the user's message to Cohere for a response
-    if len(chat_history) == 0:
+    # Use mode-specific chat history
+    if mode not in chat_history:
+        chat_history[mode] = []
+    if len(chat_history[mode]) == 0:
         mode_info =  generate_chatbot_prompt(mode)
-        chat_history.append({"role": "system", "content": mode_info})
-    chat_history.append({"role": "user", "content": request})
+        chat_history[mode].append({"role": "system", "content": mode_info})
+    chat_history[mode].append({"role": "user", "content": request})
 
     response = co.chat(
         model='command-a-03-2025',  # You can choose the model
-        messages=chat_history
+        messages=chat_history[mode]
         ,
         temperature=0.5,
     )
-    chat_history.append({"role": "assistant", "content": response.message.content[0].text })
+    chat_history[mode].append({"role": "assistant", "content": response.message.content[0].text })
     # Extract the text response from Cohere and return it
 
     return response.message.content[0].text
