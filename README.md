@@ -2,6 +2,9 @@
 
 **InsightWallet** is your smart, AI-powered personal finance companion. It's more than a tracker — it’s your spending coach, your budget assistant, and your bank statement whisperer. Designed for real people who want to build better habits, reach saving goals, and understand their money without spreadsheets and stress.
 
+<img width="1907" height="925" alt="image" src="https://github.com/user-attachments/assets/28dda88e-73f2-467a-9abb-3a4711fc237a" />
+
+
 ---
 
 ## 🚀 Features
